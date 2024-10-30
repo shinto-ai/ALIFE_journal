@@ -1,0 +1,163 @@
+/* App.css */
+
+/* 全体のボディスタイル */
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #f5f5f5;
+}
+
+/* 見出し（h2）のスタイル */
+h2 {
+  color: #333;
+  text-align: center;
+}
+
+/* コンテナのスタイル */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ボタンの基本スタイル */
+button {
+  background-color: #007BFF; /* 青色 */
+  color: #fff; /* 白色の文字 */
+  border: none;
+  padding: 12px 24px;
+  margin: 10px 0;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 4px;
+}
+
+/* ボタンのホバー時のスタイル */
+button:hover {
+  background-color: #0056b3; /* 濃い青色 */
+}
+
+/* テキスト入力フィールドのスタイル */
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+/* 画像の基本スタイル */
+img {
+  max-width: 100%;
+  height: auto;
+  cursor: pointer;
+  margin: 10px;
+}
+
+/* プロンプトのスタイル */
+.prompt {
+  font-size: 18px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* 画像コンテナのスタイル */
+.image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 画像コンテナ内の画像のスタイル */
+.image-container img {
+  max-width: 45%;
+  margin: 0 10px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+}
+
+/* 画像のホバー時のスタイル */
+.image-container img:hover {
+  border-color: #007BFF; /* 青色の枠線 */
+}
+
+/* フッターのスタイル */
+.footer {
+  text-align: center;
+  margin-top: 20px;
+  color: #777;
+  font-size: 14px;
+}
+
+/* エラーメッセージのスタイル */
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* 追加または変更されたスタイル */
+
+/* Experiment.js 用のコンテナ */
+.experiment-container {
+  text-align: center;
+}
+
+/* Result.js 用のコンテナ */
+.result-container {
+  text-align: center;
+}
+
+/* 画像のスタイル */
+.image-choice {
+  max-width: 45%;
+  margin: 0 10px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.image-choice:hover {
+  border-color: #28a745; /* 選択時の枠線色を変更 */
+}
+
+/* ローディングインジケーターのスタイル */
+.loading {
+  font-size: 18px;
+  color: #777;
+  text-align: center;
+}
+
+/* テキストエリアのスタイル */
+textarea {
+  padding: 12px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+/* ラベルのスタイル */
+label {
+  display: block;
+  margin-top: 20px;
+  font-size: 16px;
+  color: #333;
+}
+
+/* ボタンのスタイルを追加 */
+button {
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  margin: 20px 0;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 4px;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+

@@ -1,0 +1,18 @@
+# Pythonキャッシュ
+__pycache__/
+*.pyc
+*.pyo
+
+# アーカイブ
+archive/
+
+# データと結果
+data/
+results/
+
+# セッションとログ
+flask_session/
+*.log
+
+# 仮想環境
+venv/
