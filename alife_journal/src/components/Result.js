@@ -6,9 +6,7 @@ import axios from 'axios';
 function Result() {
   const [resultData, setResultData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [feedback, setFeedback] = useState('');
 
-  // 結果データの取得
   useEffect(() => {
     axios
       .get('http://localhost:5000/result', { withCredentials: true })
@@ -22,29 +20,20 @@ function Result() {
       });
   }, []);
 
-  // フィードバックの送信
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    axios
-      .post(
-        'http://localhost:5000/submit_feedback',
-        { feedback },
-        { withCredentials: true }
-      )
-      .then((response) => {
-        alert('フィードバックを送信しました。ご協力ありがとうございます。');
-        setFeedback('');
-      })
-      .catch((error) => {
-        console.error('フィードバックの送信中にエラーが発生しました:', error);
-      });
-  };
-
   if (isLoading) {
     return (
-      <div className="container">
+      <div className="container result-container">
         <h2>結果</h2>
         <p className="loading">結果を読み込んでいます...</p>
+      </div>
+    );
+  }
+
+  if (!resultData || resultData.status !== 'success') {
+    return (
+      <div className="container result-container">
+        <h2>エラー</h2>
+        <p className="error-message">結果を取得できませんでした。</p>
       </div>
     );
   }
@@ -52,24 +41,13 @@ function Result() {
   return (
     <div className="container result-container">
       <h2>実験終了</h2>
-      <p>ご協力ありがとうございました。</p>
-      {resultData && (
-        <>
-          <p>{resultData.message}</p>
-          {/* 必要に応じて結果データを表示 */}
-        </>
-      )}
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="feedback">ご感想やご意見があればご記入ください：</label>
-        <textarea
-          id="feedback"
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
-          rows="5"
-          style={{ width: '100%', marginTop: '10px' }}
-        ></textarea>
-        <button type="submit">送信</button>
-      </form>
+      <div className="content-section">
+        <p className="result-message">{resultData.message}</p>
+        <p className="instruction">ブラウザを閉じてください。</p>
+        <p className="contact-info">
+          実験に関してご意見がございましたら、shinto.ryoma@gmail.com までご連絡お願いします。
+        </p>
+      </div>
     </div>
   );
 }

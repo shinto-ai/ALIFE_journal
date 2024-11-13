@@ -1,20 +1,22 @@
+# app_aws.py
+
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from flask_session import Session
 import os
 import csv
-import uuid
 from datetime import timedelta
 import ga
 from models_local import Artist
 import logging
 import base64
 from io import BytesIO
+import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)  # 2時間でセッションの有効期限を設定
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)  # セッションの有効期限を2時間に設定
 Session(app)
 
 # ログ設定
@@ -32,19 +34,13 @@ CORS(
 
 # グローバル設定
 POPULATION_SIZE = 32
-GENERATIONS = 30
+GENERATIONS = 4
 GENE_LENGTH = 30
 RESULTS_DIR = 'results'
-RESULTS_FILE = os.path.join(RESULTS_DIR, 'sample.csv')
 
+# 必要なディレクトリを作成
 if not os.path.exists(RESULTS_DIR):
     os.makedirs(RESULTS_DIR)
-
-# CSVファイルが存在しない場合はヘッダーを書き込む
-if not os.path.isfile(RESULTS_FILE):
-    with open(RESULTS_FILE, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=["id", "generation", "member", "genome", "fitness", "father", "mother", "rank"])
-        writer.writeheader()
 
 # CSVファイルのパスを定義
 USERS_CSV_PATH = 'data/users.csv'
@@ -57,6 +53,12 @@ def authenticate_user(user_id, password):
             if row['user_id'] == user_id and row['password'] == password:
                 return True
     return False
+
+# ユーザーごとの結果ファイルのパスを取得
+def get_results_file(user_id):
+    user_dir = os.path.join(RESULTS_DIR, str(user_id))
+    os.makedirs(user_dir, exist_ok=True)
+    return os.path.join(user_dir, f'{user_id}.csv')
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -95,16 +97,15 @@ def demo():
         return jsonify({'status': 'failure', 'message': 'ログインが必要です。'}), 401
 
     images = [['/static/images/demo1.png', '/static/images/demo2.png']]
-    prompt = 'デモ：どちらの画像が好みですか？'
-    return jsonify({'images': images, 'prompt': prompt})
+    return jsonify({'images': images})
 
 # Artistオブジェクトを辞書に変換
 def artist_to_dict(artist):
     return {
         'id': artist.id,
-        'genome': artist.genome,
         'generation': artist.generation,
         'member': artist.member,
+        'genome': artist.genome,
         'fitness': artist.fitness,
         'father': artist.father,
         'mother': artist.mother,
@@ -129,10 +130,6 @@ def prepare_match_data(candidate1, candidate2):
     # 画像の生成とBase64エンコード
     image1_base64 = generate_image_base64(candidate1)
     image2_base64 = generate_image_base64(candidate2)
-    prompt = """
-画像内の図形に注目し、左側の画像と右側の画像のどちらかに「ぬもる(numolu)」という名前を付けるならばどちらに名付けますか？
-「ぬもる(numolu)」と名付ける方をクリックしてください。
-"""
     data = {
         'candidate1': {
             'id': candidate1['id'],
@@ -141,8 +138,7 @@ def prepare_match_data(candidate1, candidate2):
         'candidate2': {
             'id': candidate2['id'],
             'image_base64': image2_base64
-        },
-        'prompt': prompt
+        }
     }
     return data
 
@@ -224,14 +220,65 @@ def start_experiment():
     if not user_id:
         return jsonify({'status': 'failure', 'message': 'ログインが必要です。'}), 401
 
-    # 初期集団の生成
-    pop = ga.firstpop(POPULATION_SIZE, GENE_LENGTH)
-    # トーナメントの初期化
-    tournament_state = initialize_tournament(pop)
-    # トーナメントの状態をセッションに保存
-    session['tournament_state'] = tournament_state
-    # 世代数をセッションに保存
-    session['generation'] = 0
+    # ユーザーの結果ファイルを取得
+    results_file_path = get_results_file(user_id)
+
+    # 結果ファイルが存在し、データがある場合は再開
+    if os.path.exists(results_file_path):
+        try:
+            df = pd.read_csv(results_file_path)
+            if not df.empty:
+                max_generation = df['generation'].max()
+                # 最新の世代の個体群を取得
+                latest_population_data = df[df['generation'] == max_generation]
+                # 個体群を再構築
+                latest_population = []
+                for _, row in latest_population_data.iterrows():
+                    artist = Artist(
+                        id=row['id'],
+                        genome=row['genome'],
+                        generation=row['generation'],
+                        member=row['member'],
+                        fitness=row['fitness'],
+                        father=row['father'],
+                        mother=row['mother'],
+                        rank=row['rank']
+                    )
+                    latest_population.append(artist)
+
+                # 世代数を前回の最大値に+1して設定
+                max_generation = max_generation + 1
+                session['generation'] = max_generation
+                logger.info(f"Resuming experiment for user {user_id} from generation {max_generation}.")
+
+                # 前世代の個体から新しい個体群を生成
+                new_population = ga.newpop(latest_population, GENE_LENGTH, max_generation)
+
+                # トーナメントの初期化
+                tournament_state = initialize_tournament(new_population)
+                session['tournament_state'] = tournament_state
+
+                # # 世代数を前回の最大値に+1して設定
+                # session['generation'] = max_generation + 1
+                # logger.info(f"Resuming experiment for user {user_id} from generation {max_generation + 1}.")
+            else:
+                # データがない場合は新規開始
+                raise FileNotFoundError
+        except Exception as e:
+            logger.error(f"Error reading CSV file for user {user_id}: {str(e)}")
+            # 新規実験を開始
+            pop = ga.firstpop(POPULATION_SIZE, GENE_LENGTH)
+            tournament_state = initialize_tournament(pop)
+            session['tournament_state'] = tournament_state
+            session['generation'] = 0
+            logger.info(f"Starting new experiment for user {user_id}.")
+    else:
+        # 結果ファイルが存在しない場合は新規開始
+        pop = ga.firstpop(POPULATION_SIZE, GENE_LENGTH)
+        tournament_state = initialize_tournament(pop)
+        session['tournament_state'] = tournament_state
+        session['generation'] = 0
+        logger.info(f"Starting new experiment for user {user_id}.")
 
     # 最初の対戦ペアを取得
     current_round = tournament_state['rounds'][tournament_state['current_round_index']]
@@ -267,17 +314,21 @@ def choose_candidate():
 
             # 個体群の結果をCSVファイルに保存
             population_data = tournament_state['rounds'][0]
+            results_file_path = get_results_file(user_id)
             for p_data in population_data:
                 pop_list = [p_data['id'], p_data['generation'], p_data['member'], p_data['genome'],
                             p_data['fitness'], p_data['father'], p_data['mother'], p_data['rank']]
-                ga.write_to_csv(RESULTS_FILE, pop_list)
+                ga.write_to_csv(results_file_path, pop_list)
+
+            # # 現在の世代数を取得
+            # generation = session.get('generation', 0)
 
             # 世代数を更新
             generation = session.get('generation', 0) + 1
             session['generation'] = generation
 
             # 世代数が最大値に達したか確認
-            if generation >= GENERATIONS:
+            if generation > GENERATIONS:
                 return jsonify({'status': 'experiment_finished', 'message': '全ての世代が終了しました。'})
             else:
                 # 新しい個体群を生成
@@ -287,6 +338,9 @@ def choose_candidate():
                 # トーナメントの初期化
                 tournament_state = initialize_tournament(new_population)
                 session['tournament_state'] = tournament_state
+
+                # # 世代数を更新
+                # session['generation'] = generation + 1
 
                 # 最初の対戦ペアを取得
                 current_round = tournament_state['rounds'][tournament_state['current_round_index']]
@@ -305,6 +359,24 @@ def choose_candidate():
             return jsonify(data)
     except ValueError as e:
         return jsonify({'status': 'failure', 'message': str(e)}), 400
+    
+
+@app.route('/result', methods=['GET'])
+def result():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'failure', 'message': 'ログインが必要です。'}), 401
+
+    # ユーザーの結果ファイルを取得
+    results_file_path = get_results_file(user_id)
+
+    if os.path.exists(results_file_path):
+        # 結果データを読み込む（必要に応じて）
+        # 今回は簡単のため、メッセージのみ返す
+        return jsonify({'status': 'success', 'message': '実験が終了しました。ご協力ありがとうございました。'})
+    else:
+        return jsonify({'status': 'failure', 'message': '結果データが見つかりません。'}), 404
+
 
 if __name__ == '__main__':
     app.run(debug=True)

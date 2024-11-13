@@ -25,32 +25,44 @@ function Demo() {
     [demoImage9, demoImage10],
   ];
 
-  const prompt = 'どちらが「kiki」ですか？';
+  const prompt = ` 
+    画像内の図形に注目し、左側の画像と右側の画像のどちらかに「キキ(kiki)」という名前を付けるならばどちらに名付けますか？
+    「キキ(kiki)」と名付ける方をクリックしてください。
+  `;
 
   const handleImageClick = () => {
     if (step < images.length - 1) {
       setStep(step + 1);
     } else {
-      history.push('/prepare'); // 遷移先を '/prepare' に変更
+      history.push('/prepare');
     }
   };
 
   return (
-    <div className="container">
+    <div className="container demo-container">
       <h2>デモ</h2>
       <p className="prompt">{prompt}</p>
       <div className="image-container">
-        <img
-          src={images[step][0]}
-          alt="Option 1"
-          onClick={handleImageClick}
-        />
-        <img
-          src={images[step][1]}
-          alt="Option 2"
-          onClick={handleImageClick}
-        />
+        <div className="image-wrapper">
+          <img
+            src={images[step][0]}
+            alt="Option 1"
+            onClick={handleImageClick}
+            className="demo-image"
+          />
+        </div>
+        <div className="image-wrapper">
+          <img
+            src={images[step][1]}
+            alt="Option 2"
+            onClick={handleImageClick}
+            className="demo-image"
+          />
+        </div>
       </div>
+      <p className="step-counter">
+        Step {step + 1} / {images.length}
+      </p>
     </div>
   );
 }

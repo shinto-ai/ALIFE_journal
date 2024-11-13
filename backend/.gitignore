@@ -9,6 +9,7 @@ archive/
 # データと結果
 data/
 results/
+demo_space/
 
 # セッションとログ
 flask_session/

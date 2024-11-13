@@ -1,14 +1,21 @@
+// Experiment.js
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useHistory } from 'react-router-dom';
 
 function Experiment() {
+  const history = useHistory();
   const [candidate1, setCandidate1] = useState(null);
   const [candidate2, setCandidate2] = useState(null);
-  const [prompt, setPrompt] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [experimentFinished, setExperimentFinished] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
-  const [generation, setGeneration] = useState(0);
+
+  // プロンプトをフロントエンドで定義
+  const promptText = `
+    画像内の図形に注目し、左側の画像と右側の画像のどちらかに「ぬもる(numolu)」という名前を付けるならばどちらに名付けますか？
+    「ぬもる(numolu)」と名付ける方をクリックしてください。
+  `;
 
   useEffect(() => {
     startExperiment();
@@ -25,7 +32,6 @@ function Experiment() {
       const data = response.data;
       setCandidate1(data.candidate1);
       setCandidate2(data.candidate2);
-      setPrompt(data.prompt);
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -45,15 +51,13 @@ function Experiment() {
       const data = response.data;
 
       if (data.status === 'experiment_finished') {
-        setExperimentFinished(true);
-        setMessage(data.message);
+        setLoading(false);
+        history.push('/result');
       } else {
         setCandidate1(data.candidate1);
         setCandidate2(data.candidate2);
-        setPrompt(data.prompt);
-        setGeneration((prevGen) => prevGen + 1);
+        setLoading(false);
       }
-      setLoading(false);
     } catch (error) {
       setLoading(false);
       console.error('Error choosing candidate:', error);
@@ -61,43 +65,33 @@ function Experiment() {
     }
   };
 
-  if (experimentFinished) {
-    return (
-      <div>
-        <h2>実験終了</h2>
-        <p>{message}</p>
-      </div>
-    );
-  }
-
-  if (loading || !candidate1 || !candidate2) {
-    return <div>読み込み中...</div>;
-  }
-
   return (
-    <div>
+    <div className="container experiment-container">
       <h2>実験</h2>
-      <p>試行回数: {generation}</p>
-      <p>{prompt}</p>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <div onClick={() => chooseCandidate(candidate1.id)} style={{ margin: '0 20px' }}>
-          <img
-            src={`data:image/png;base64,${candidate1.image_base64}`}
-            alt="Candidate 1"
-            width="300"
-            height="300"
-          />
+      <p className="prompt">{promptText}</p>
+      {loading || !candidate1 || !candidate2 ? (
+        <div className="loading">読み込み中...</div>
+      ) : (
+        <div className="image-container">
+          <div className="image-wrapper">
+            <img
+              src={`data:image/png;base64,${candidate1.image_base64}`}
+              alt="Candidate 1"
+              onClick={() => chooseCandidate(candidate1.id)}
+              className="experiment-image"
+            />
+          </div>
+          <div className="image-wrapper">
+            <img
+              src={`data:image/png;base64,${candidate2.image_base64}`}
+              alt="Candidate 2"
+              onClick={() => chooseCandidate(candidate2.id)}
+              className="experiment-image"
+            />
+          </div>
         </div>
-        <div onClick={() => chooseCandidate(candidate2.id)} style={{ margin: '0 20px' }}>
-          <img
-            src={`data:image/png;base64,${candidate2.image_base64}`}
-            alt="Candidate 2"
-            width="300"
-            height="300"
-          />
-        </div>
-      </div>
-      {message && <p>{message}</p>}
+      )}
+      {message && <p className="error-message">{message}</p>}
     </div>
   );
 }
