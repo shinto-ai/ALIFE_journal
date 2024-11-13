@@ -1,4 +1,4 @@
-# app_aws.py
+# app.py
 
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 CORS(
     app,
     supports_credentials=True,
-    resources={r"/*": {"origins": "http://localhost:3000"}},
+    resources={r"/*": {"origins": "http://35.72.8.64"}},
     allow_headers=["Content-Type", "Authorization"],
     expose_headers=["Content-Type", "Authorization"],
     methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"]
@@ -379,4 +379,5 @@ def result():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
+

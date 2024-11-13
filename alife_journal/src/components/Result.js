@@ -9,7 +9,7 @@ function Result() {
 
   useEffect(() => {
     axios
-      .get('http://localhost:5000/result', { withCredentials: true })
+      .get(`${process.env.REACT_APP_BACKEND_URL}/result`, { withCredentials: true })
       .then((response) => {
         setResultData(response.data);
         setIsLoading(false);

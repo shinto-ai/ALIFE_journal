@@ -11,7 +11,7 @@ function Instructions() {
   useEffect(() => {
     const fetchInstructions = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/instructions', { withCredentials: true });
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/instructions`, { withCredentials: true });
         setInstructions(response.data.instructions);
       } catch (error) {
         console.error('Error fetching instructions:', error);

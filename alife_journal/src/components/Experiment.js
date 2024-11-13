@@ -25,7 +25,7 @@ function Experiment() {
     setLoading(true);
     try {
       const response = await axios.post(
-        'http://localhost:5000/experiment/start',
+        `${process.env.REACT_APP_BACKEND_URL}/experiment/start`,
         {},
         { withCredentials: true }
       );
@@ -44,7 +44,7 @@ function Experiment() {
     setLoading(true);
     try {
       const response = await axios.post(
-        'http://localhost:5000/experiment/choose',
+        `${process.env.REACT_APP_BACKEND_URL}/experiment/choose`,
         { selected_candidate_id: selectedCandidateId },
         { withCredentials: true }
       );
