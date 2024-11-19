@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 CORS(
     app,
     supports_credentials=True,
-    resources={r"/*": {"origins": "http://35.72.8.64"}},
+    resources={r"/*": {"origins": "http://localhost:3000"}},
     allow_headers=["Content-Type", "Authorization"],
     expose_headers=["Content-Type", "Authorization"],
     methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"]
@@ -377,7 +377,10 @@ def result():
     else:
         return jsonify({'status': 'failure', 'message': '結果データが見つかりません。'}), 404
 
-
+# ローカルで実行する場合
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(debug=True)
 
+# # AWSで実行する場合
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0', port=5000, debug=False)

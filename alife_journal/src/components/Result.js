@@ -43,7 +43,9 @@ function Result() {
       <h2>実験終了</h2>
       <div className="content-section">
         <p className="result-message">{resultData.message}</p>
-        <p className="instruction">ブラウザを閉じてください。</p>
+        <p className="instruction">次のコードを Cloud Works で入力してください。</p>
+      <h2>112233</h2> 
+        <p className="instruction">入力完了後,ブラウザを閉じてください。</p>
         <p className="contact-info">
           実験に関してご意見がございましたら、shinto.ryoma@gmail.com までご連絡お願いします。
         </p>
